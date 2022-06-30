@@ -104,34 +104,40 @@ H5P.init = function (target) {
       metadata: contentData.metadata
     };
 
+    const getUserStatePromise = new Promise((res, rej) => {
+
     H5P.getUserData(contentId, 'state', function (err, previousState) {
-      if (previousState) {
-        library.userDatas = {
-          state: previousState
-        };
-      }
-      else if (previousState === null && H5PIntegration.saveFreq) {
-        // Content has been reset. Display dialog.
-        delete contentData.contentUserData;
-        var dialog = new H5P.Dialog('content-user-data-reset', 'Data Reset', '<p>' + H5P.t('contentChanged') + '</p><p>' + H5P.t('startingOver') + '</p><div class="h5p-dialog-ok-button" tabIndex="0" role="button">OK</div>', $container);
-        H5P.jQuery(dialog).on('dialog-opened', function (event, $dialog) {
+        if (previousState) {
+            library.userDatas = {
+            state: previousState
+            };
+        }
+        else if (previousState === null && H5PIntegration.saveFreq) {
+            // Content has been reset. Display dialog.
+            delete contentData.contentUserData;
+            var dialog = new H5P.Dialog('content-user-data-reset', 'Data Reset', '<p>' + H5P.t('contentChanged') + '</p><p>' + H5P.t('startingOver') + '</p><div class="h5p-dialog-ok-button" tabIndex="0" role="button">OK</div>', $container);
+            H5P.jQuery(dialog).on('dialog-opened', function (event, $dialog) {
 
-          var closeDialog = function (event) {
-            if (event.type === 'click' || event.which === 32) {
-              dialog.close();
-              H5P.deleteUserData(contentId, 'state', 0);
-            }
-          };
+            var closeDialog = function (event) {
+                if (event.type === 'click' || event.which === 32) {
+                dialog.close();
+                H5P.deleteUserData(contentId, 'state', 0);
+                }
+            };
 
-          $dialog.find('.h5p-dialog-ok-button').click(closeDialog).keypress(closeDialog);
-          H5P.trigger(instance, 'resize');
-        }).on('dialog-closed', function () {
-          H5P.trigger(instance, 'resize');
+            $dialog.find('.h5p-dialog-ok-button').click(closeDialog).keypress(closeDialog);
+            H5P.trigger(instance, 'resize');
+            }).on('dialog-closed', function () {
+            H5P.trigger(instance, 'resize');
+            });
+            dialog.open();
+        }        
+        // If previousState is false we don't have a previous state
+        res();
         });
-        dialog.open();
-      }
-      // If previousState is false we don't have a previous state
     });
+
+    getUserStatePromise.then(() => {
 
     // Create new instance.
     var instance = H5P.newRunnable(library, contentId, $container, true, {standalone: true});
@@ -366,7 +372,7 @@ H5P.init = function (target) {
 
     if (H5P.externalDispatcher) {
       H5P.externalDispatcher.trigger('initialized');
-    }
+    }});
   });
 
   // Insert H5Ps that should be in iframes.
